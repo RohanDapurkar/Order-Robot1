@@ -1,8 +1,9 @@
 from RPA.Browser.Selenium import Selenium
+import glob
 import pandas as pd
 from RPA.HTTP import HTTP
 from RPA.PDF import PDF
-from PyPDF2 import PdfFileMerger
+from PyPDF2 import PdfMerger
 from PIL import Image
 import os
 import time as t
@@ -73,33 +74,35 @@ def convert_to_pdf():
     df = pd.read_csv("orders.csv")
     it = int(len(list(df["Head"])))
     k = 0
-    dir_name = "ss_pdf"
-    ss_path = os.path.join(curr_dir, dir_name)
     while k<it:
         image1 = Image.open(r'output/screenshot_{0}.png'.format(k))
         im1 = image1.convert('RGB')
-        im1.save(r'{0}/screenshot_{1}.pdf'.format(ss_path,k))
+        im1.save(r'ss_pdf/screenshot_{0}.pdf'.format(k))
         k = k+1
         
 def merge_pdfs():
     df = pd.read_csv("orders.csv")
     it = len(list(df["Head"]))
-    dir_name = "ss_pdf"
-    ss_path = os.path.join(curr_dir, dir_name)
-
-    dir_name1 = "merged_files"
-    merge_path = os.path.join(curr_dir, dir_name1)
-
     for t in range(it):
-        pdfs = ['{0}/screenshot_{1}.pdf'.format(ss_path,t), 'output/receipts_{0}.pdf'.format(t)]
-        merger = PdfFileMerger()
+        pdfs = ['ss_pdf/screenshot_{0}.pdf'.format(t), 'output/receipts_{0}.pdf'.format(t)]
+        merger = PdfMerger()
         for pdf in pdfs:
             merger.append(pdf)
-        merger.write("{0}/merged_file_{1}.pdf".format(merge_path,t))
-        merger.close()       
+        merger.write("merged_files/merged_file_{0}.pdf".format(t))
+        merger.close()
 
 def make_zip():
-    shutil.make_archive("compressed_pdfs", 'zip', "merged_files")
+    shutil.make_archive("./output/compressed_pdfs", 'zip', "merged_files")
+    shutil.rmtree('./merged_files')
+    shutil.rmtree('./ss_pdf')
+    
+    png_files = glob.glob(os.path.join('./output', '*.png'))
+    pdf_files = glob.glob(os.path.join('./output', '*.pdf'))
+    
+    for pdf_file in pdf_files:
+        os.remove(pdf_file)
+    for png_file in png_files:
+        os.remove(png_file)
     
 
 def main():
@@ -110,6 +113,3 @@ def main():
     make_zip()
 
 main()
-
-
-
